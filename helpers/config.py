@@ -138,6 +138,8 @@ class Config(metaclass=Singleton):
                     self.__questions_uwsgi()
 
                 self.__questions_custom_yml()
+                self.__questions_asr()
+                self.__question_asr_engine_configuration()
 
             else:
                 self.__secure_mongo()
@@ -290,6 +292,8 @@ class Config(metaclass=Singleton):
         # Keep properties sorted alphabetically
         return {
             'advanced': False,
+            'asr_google': False,
+            'asr_google_keyfile_location': '',
             'aws_access_key': '',
             'aws_backup_bucket_deletion_rule_enabled': False,
             'aws_backup_bucket_name': '',
@@ -324,6 +328,7 @@ class Config(metaclass=Singleton):
             'expose_backend_ports': False,
             'exposed_nginx_docker_port': Config.DEFAULT_NGINX_PORT,
             'google_api_key': '',
+            'google_storage_bucket_name': '',
             'google_ua': '',
             'https': True,
             'internal_domain_name': 'docker.internal',
@@ -412,6 +417,7 @@ class Config(metaclass=Singleton):
             'super_user_password': Config.generate_password(),
             'super_user_username': 'super_admin',
             'two_databases': True,
+            'use_asr': False,
             'use_aws': False,
             'use_backup': False,
             'use_backend_custom_yml': False,
@@ -691,6 +697,13 @@ class Config(metaclass=Singleton):
                 CLI.run_command(git_command,
                                 cwd=os.path.dirname(full_repo_path))
 
+    def __copy_google_app_credentials(self, credentials_path: str):
+        filename = os.path.basename(credentials_path)
+        destination_path = os.path.join(self.__dict['kpi_path'], filename)
+        if not os.path.exists(destination_path):
+            self.__dict['google_credentials_path'] = destination_path
+        shutil.copy(credentials_path, destination_path)
+
     def __detect_network(self):
 
         self.__dict['local_interface_ip'] = Network.get_primary_ip()
@@ -750,6 +763,38 @@ class Config(metaclass=Singleton):
         self.__dict['advanced'] = CLI.yes_no_question(
             'Do you want to see advanced options?',
             default=self.__dict['advanced'])
+
+    def __questions_asr(self):
+        """
+        Asks if user wants to configure automatic speech recognition options
+        """
+        self.__dict['use_asr'] = CLI.yes_no_question(
+            'Do you want to enable Automatic Speech Recognition?',
+            default=self.__dict['use_asr']
+        )
+
+    def __question_asr_engine_configuration(self):
+        if self.__dict['use_asr']:
+            self.__dict['asr_google'] = CLI.yes_no_question(
+                'Do you want to enable the google ASR engine?',
+                default=self.__dict['asr_google']
+            )
+            self.__questions_asr_google_configuration()
+
+    def __questions_asr_google_configuration(self):
+        if self.__dict['asr_google']:
+            self.__dict['asr_google_keyfile_location'] = CLI.colored_input(
+                'Google Key File Location', CLI.COLOR_QUESTION,
+                self.__dict['asr_google_keyfile_location']
+            )
+            self.__dict['google_application_credentials'] = os.path.basename(
+                self.__dict['asr_google_keyfile_location']
+            )
+            self.__copy_google_app_credentials(self.__dict['asr_google_keyfile_location'])
+            self.__dict['google_storage_bucket_name'] = CLI.colored_print(
+                'Google Storage Bucket Name', CLI.COLOR_QUESTION,
+                self.__dict['google_storage_bucket_name']
+            )
 
     def __questions_aws(self):
         """
