@@ -791,7 +791,7 @@ class Config(metaclass=Singleton):
                 self.__dict['asr_google_keyfile_location']
             )
             self.__copy_google_app_credentials(self.__dict['asr_google_keyfile_location'])
-            self.__dict['google_storage_bucket_name'] = CLI.colored_print(
+            self.__dict['google_storage_bucket_name'] = CLI.colored_input(
                 'Google Storage Bucket Name', CLI.COLOR_QUESTION,
                 self.__dict['google_storage_bucket_name']
             )
