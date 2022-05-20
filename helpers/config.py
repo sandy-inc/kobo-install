@@ -31,7 +31,7 @@ class Config(metaclass=Singleton):
     DEFAULT_NGINX_PORT = '80'
     DEFAULT_NGINX_HTTPS_PORT = '443'
     KOBO_DOCKER_BRANCH = '2.022.20'
-    KOBO_INSTALL_VERSION = '6.6.0'
+    KOBO_INSTALL_VERSION = '6.7.1'
     MAXIMUM_AWS_CREDENTIAL_ATTEMPTS = 3
     ALLOWED_PASSWORD_CHARACTERS = (
         string.ascii_letters
@@ -421,12 +421,12 @@ class Config(metaclass=Singleton):
             'use_private_dns': False,
             'use_wal_e': False,
             'uwsgi_harakiri': '120',
-            'uwsgi_max_requests': '512',
+            'uwsgi_max_requests': '1024',
             'uwsgi_settings': False,
-            'uwsgi_soft_limit': '128',
+            'uwsgi_soft_limit': '1024',
             'uwsgi_worker_reload_mercy': '120',
-            'uwsgi_workers_max': '2',
-            'uwsgi_workers_start': '1',
+            'uwsgi_workers_max': '4',
+            'uwsgi_workers_start': '2',
         }
 
     @property
@@ -1342,11 +1342,9 @@ class Config(metaclass=Singleton):
 
     def __questions_mongo(self):
         """
-        Ask for MongoDB credentials only when server is for:
-        - primary back end
-        - single server installation
+        Ask for MongoDB credentials only when server is not secondary back end
         """
-        if self.primary_backend or not self.multi_servers:
+        if not self.secondary_backend:
             mongo_user_username = self.__dict['mongo_user_username']
             mongo_user_password = self.__dict['mongo_user_password']
             mongo_root_username = self.__dict['mongo_root_username']
@@ -2145,10 +2143,10 @@ class Config(metaclass=Singleton):
 
                 return
 
-        self.__dict['uwsgi_workers_start'] = '1'
-        self.__dict['uwsgi_workers_max'] = '2'
-        self.__dict['uwsgi_max_requests'] = '512'
-        self.__dict['uwsgi_soft_limit'] = '128'
+        self.__dict['uwsgi_workers_start'] = '2'
+        self.__dict['uwsgi_workers_max'] = '4'
+        self.__dict['uwsgi_max_requests'] = '1024'
+        self.__dict['uwsgi_soft_limit'] = '1024'
         self.__dict['uwsgi_harakiri'] = '120'
         self.__dict['uwsgi_worker_reload_mercy'] = '120'
 
